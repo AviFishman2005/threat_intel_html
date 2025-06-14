@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Threat Intelligence Platform</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 40px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Threat Intelligence Platform</h1>
+  <p>Click the button below to fetch today's most attacked country from the SANS Internet Storm Center.</p>
+  <button id="refresh">Refresh</button>
+  <div id="result">Click Refresh to fetch data.</div>
+  <script>
+    async function fetchData() {
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = 'Fetching...';
+      try {
+        const resp = await fetch('https://isc.sans.edu/api/country?json');
+        if (!resp.ok) throw new Error('Network response was not ok');
+        const data = await resp.json();
+        const entries = data.filter(e => e.country);
+        if (!entries.length) {
+          resultEl.textContent = 'No data';
+          return;
+        }
+        const top = entries.reduce((prev, current) => current.targets > prev.targets ? current : prev);
+        const country = top.country;
+        const count = parseInt(top.targets, 10);
+        const flag = country.length === 2 ? String.fromCodePoint(...[...country.toUpperCase()].map(c => c.codePointAt(0) + 127397)) : '';
+        resultEl.textContent = `${country} ${flag} - ${count} targets`;
+      } catch (err) {
+        resultEl.textContent = 'Error: ' + err.message;
+      }
+    }
+    document.getElementById('refresh').addEventListener('click', fetchData);
+  </script>
+</body>
+</html>

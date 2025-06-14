@@ -17,23 +17,26 @@ This single-page app shows basic threat intelligence information relevant to Isr
 
 The application stores the API key in `localStorage` on your browser so you don't need to re-enter it each time.
 
-## Live Threat Feed Aggregator
+## Command Line Tools
 
-Run `python threat_feed_aggregator.py` to continuously display the latest items from several threat feeds. Requires packages in `requirements.txt`.
+All functionality is now provided by a single command line interface. Run
+`python -m threataggregator` with one of the following sub‑commands:
 
-`async_threat_feed_aggregator.py` performs the same task using `aiohttp` to
-fetch all feeds concurrently for faster updates and includes additional sources.
-
-
-## Indicator Reputation Checker
-
-Use `ioc_checker.py` to query multiple threat intelligence sources for a given IP address. The script checks VirusTotal, AbuseIPDB, AlienVault OTX, and Cisco Talos simultaneously. API keys for each service can be supplied via environment variables `VT_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY`.
+- `feeds` – stream a curated set of threat intelligence RSS feeds. Use the
+  `--interval` option to control the refresh rate.
+- `sources` – parse this README and display recent items from the links listed
+  under the **Sources** section.
+- `ioc` – query multiple reputation services for a given IP address.
 
 Example:
 
 ```bash
+# Stream feeds continuously
+python -m threataggregator feeds --interval 300
+
+# Check an IP reputation
 export VT_API_KEY=YOUR_KEY
-python ioc_checker.py 8.8.8.8
+python -m threataggregator ioc 8.8.8.8
 ```
 These are all of the sources (from the awesome threat intelligence repo:
 

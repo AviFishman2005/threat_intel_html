@@ -16,3 +16,8 @@ This single-page app shows basic threat intelligence information relevant to Isr
 4. Enter your OpenAI API key in the field provided to enable the chatbot and ask questions about the latest reports.
 
 The application stores the API key in `localStorage` on your browser so you don't need to re-enter it each time.
+
+## Live Threat Feed Aggregator
+
+Run `python threat_feed_aggregator.py` to continuously display the latest items from several threat feeds. Requires packages in `requirements.txt`.
+

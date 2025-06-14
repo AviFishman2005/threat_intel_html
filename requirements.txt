@@ -1,3 +1,7 @@
 feedparser
 beautifulsoup4
 rich
+
+aiohttp
+python-dateutil
+pytz

@@ -1,15 +1,21 @@
 import feedparser
 from bs4 import BeautifulSoup
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from rich.console import Console
 from rich.table import Table
 
+# List of RSS feeds to poll. Only feeds that reliably return valid XML are
+# included to ensure new content is fetched on every run.
 FEEDS = {
     "Kaspersky": "https://securelist.com/feed/",
-    "Cisco Talos": "https://blog.talosintelligence.com/feeds/posts/default",
-    "AlienVault OTX": "https://otx.alienvault.com/blog/feed/",
-    "CERT-IL": "https://www.gov.il/he/departments/news/rss-cyber"
+    "Cisco Talos": "https://blog.talosintelligence.com/rss",
+    "BleepingComputer": "https://www.bleepingcomputer.com/feed/",
+    "The Hacker News": "https://feeds.feedburner.com/TheHackersNews",
+    "SecurityWeek": "https://www.securityweek.com/feed/",
+    "Dark Reading": "https://www.darkreading.com/rss.xml",
+    "KrebsOnSecurity": "https://krebsonsecurity.com/feed/",
+    "CISA ICS": "https://www.cisa.gov/uscert/ncas/all.xml",
 }
 
 REFRESH_INTERVAL = 300  # 5 minutes
@@ -26,7 +32,12 @@ def clean_html(text: str) -> str:
 
 def fetch_feed(name: str, url: str):
     try:
-        return feedparser.parse(url)
+        feed = feedparser.parse(url)
+        if getattr(feed, "bozo", 0):
+            console.print(
+                f"[yellow]Warning: {name} feed parsing issue: {feed.bozo_exception}[/yellow]"
+            )
+        return feed
     except Exception as e:
         console.print(f"[red]Failed to fetch {name} feed: {e}[/red]")
         return None
@@ -41,7 +52,9 @@ def gather_entries():
         for entry in feed.entries:
             published = None
             if 'published_parsed' in entry and entry.published_parsed:
-                published = datetime.fromtimestamp(time.mktime(entry.published_parsed))
+                published = datetime.fromtimestamp(
+                    time.mktime(entry.published_parsed), tz=timezone.utc
+                )
             entries.append({
                 'title': entry.get('title', 'No title'),
                 'link': entry.get('link', ''),
@@ -53,14 +66,14 @@ def gather_entries():
 
 
 def display_entries(entries, seen_links):
-    table = Table(title=f"Threat Intelligence Feeds ({datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')})")
+    table = Table(title=f"Threat Intelligence Feeds ({datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')})")
     table.add_column("Source")
     table.add_column("Published")
     table.add_column("Title")
     table.add_column("Link")
 
     new_entries = []
-    for entry in sorted(entries, key=lambda x: x['published'] or datetime.utcnow(), reverse=True):
+    for entry in sorted(entries, key=lambda x: x['published'] or datetime.now(timezone.utc), reverse=True):
         if entry['link'] in seen_links:
             continue
         seen_links.add(entry['link'])
